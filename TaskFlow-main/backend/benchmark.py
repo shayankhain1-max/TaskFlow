@@ -1,54 +1,70 @@
+"""
+benchmark.py
+
+Run with:  python3 benchmark.py
+
+Uses the comparison-counting wrapper functions (Section 2, Task 5) against
+synthetic in-memory task dicts shaped like the app's real tasks (title,
+priority, due_date), at three sizes: 10, 500, 3000.
+Prints the results and writes them to benchmark_results.txt.
+"""
+
 import random
-import time
 
-from algorithms import insertion_sort, binary_search, linear_search
+from algorithms import (
+    insertion_sort_count,
+    binary_search_count,
+    linear_search_count,
+)
 
-
-# 1000 random records
-records = []
-
-for i in range(1000):
-    records.append({
-        "title": f"Task {i}",
-        "priority": random.randint(1, 3)
-    })
+SIZES = [10, 500, 3000]
+PRIORITIES = ["low", "medium", "high"]
+priority_rank = {"low": 1, "medium": 2, "high": 3}
 
 
-# --------------------------
-# Insertion Sort
-# --------------------------
-sort_data = records.copy()
-
-start = time.perf_counter()
-
-insertion_sort(sort_data, "priority")
-
-end = time.perf_counter()
-
-print(f"Insertion Sort: {end-start:.6f} sec")
+def make_records(n):
+    records = []
+    for i in range(n):
+        records.append({
+            "title": f"Task {i:05d}",
+            "priority": priority_rank[random.choice(PRIORITIES)],
+            "due_date": random.choice(["today", "tomorrow", "next friday", None]),
+        })
+    return records
 
 
-# --------------------------
-# Binary Search
-# --------------------------
-sort_data = sorted(records, key=lambda x: x["title"])
+def run():
+    lines = []
+    lines.append(f"{'Size':>6} | {'InsertionSort (comparisons)':>28} | "
+                  f"{'BinarySearch (comparisons)':>26} | {'LinearSearch (comparisons)':>26}")
+    lines.append("-" * 100)
 
-start = time.perf_counter()
+    for n in SIZES:
+        records = make_records(n)
 
-binary_search(sort_data, "Task 500", "title")
+        # Insertion sort comparison count (sorts by priority rank)
+        sort_data = [dict(r) for r in records]
+        sort_comparisons = insertion_sort_count(sort_data, "priority")
 
-end = time.perf_counter()
+        # Binary search: search for a title known to exist, on data
+        # already sorted by title
+        by_title = sorted([dict(r) for r in records], key=lambda r: r["title"])
+        target_title = by_title[n // 2]["title"] if n > 0 else None
+        bsearch_result = binary_search_count(by_title, target_title, "title") if n > 0 else {"comparison_count": 0}
 
-print(f"Binary Search: {end-start:.6f} sec")
+        # Linear search: same target, unsorted order
+        lsearch_result = linear_search_count(records, target_title, "title") if n > 0 else {"comparison_count": 0}
+
+        line = (f"{n:>6} | {sort_comparisons:>28} | "
+                f"{bsearch_result['comparison_count']:>26} | {lsearch_result['comparison_count']:>26}")
+        lines.append(line)
+
+    output = "\n".join(lines)
+    print(output)
+
+    with open("benchmark_results.txt", "w") as f:
+        f.write(output + "\n")
 
 
-# --------------------------
-# Linear Search
-# --------------------------
-start = time.perf_counter()
-
-linear_search(records, "Task 500", "title")
-
-end = time.perf_counter()
-
-print(f"Linear Search: {end-start:.6f} sec")
+if __name__ == "__main__":
+    run()

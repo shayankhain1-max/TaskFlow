@@ -12,7 +12,6 @@ import models
 from routes import users
 from routes import projects
 from routes import tasks
-from routes import algorithms
 from routes import quick_add
 
 # Create tables
@@ -24,25 +23,16 @@ app = FastAPI(
     description="AI Assisted Task Management Platform"
 )
 
-@app.middleware("http")
-async def log_requests(request, call_next):
-    try:
-        response = await call_next(request)
-        return response
-    except Exception as e:
-        print("ERROR:", e)
-        raise
-
 # =========================
 # CORS Configuration
 # =========================
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-    "http://127.0.0.1:5500",
-    "http://localhost:5500",
-    "https://taskflow-frontend-p55u.onrender.com",
-],
+        "http://127.0.0.1:5500",
+        "http://localhost:5500",
+        "https://taskflow-frontend-p55u.onrender.com",
+    ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["Content-Type", "Authorization"],
@@ -59,9 +49,7 @@ async def log_requests(request, call_next):
 
     process_time = (time.time() - start_time) * 1000
 
-    print(
-        f"{request.method} {request.url.path} - {process_time:.2f} ms"
-    )
+    print(f"{request.method} {request.url.path} - {process_time:.2f} ms")
 
     return response
 
@@ -70,9 +58,7 @@ async def log_requests(request, call_next):
 # =========================
 @app.get("/")
 def home():
-    return {
-        "message": "Welcome to TaskFlow API"
-    }
+    return {"message": "Welcome to TaskFlow API"}
 
 # =========================
 # Include Routers
@@ -80,5 +66,4 @@ def home():
 app.include_router(users.router)
 app.include_router(projects.router)
 app.include_router(tasks.router)
-app.include_router(algorithms.router)
 app.include_router(quick_add.router)
